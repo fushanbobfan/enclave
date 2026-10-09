@@ -8,6 +8,17 @@ itself into enclaves.
 
 **Live demo:** https://fushanbobfan.github.io/enclave/
 
+Schelling's point, made with coins on a checkerboard in 1969–71, was that
+mild individual preferences can add up to a sharply divided whole. A
+household here that is perfectly happy with two unlike neighbours for every
+like one still ends up, after the moving settles, with about three quarters
+of its neighbours like itself. Nobody chose that outcome; it is what the
+moves add up to.
+
+No build step and no dependencies. The grid, the moving rules, the
+measures, the renderer and the share links are plain ES modules covered by
+a Node test suite; only `src/main.js` touches the DOM.
+
 ## Quick start
 
 Open `index.html` through any static server, or run:
@@ -18,6 +29,89 @@ npm run serve
 ```
 
 Run the tests with `npm test` (Node 20 or later, no dependencies).
+
+## What to try
+
+- **A third is enough** (the default). Press Play. Similarity climbs from
+  the 50% you would get by chance to about 74% and the town settles in
+  twenty or so sweeps.
+- **Wanting half.** Asking for an even split carves out large, solid
+  enclaves, near 87% alike.
+- **Majority and minority.** A 75/25 town under the same one-third rule.
+  The majority settles at once; minority households that move to a random
+  empty home mostly land among the majority again, and some are still
+  moving hundreds of sweeps later.
+- **Four groups.** A random block is only a quarter alike, so wanting a
+  third is a real demand, and the town ends up around 70% alike.
+- **Short moves.** Households take the nearest home that suits them. The
+  town settles sooner and a little less sorted than with long random moves.
+- **Mixers.** Nobody needs like neighbours, but everyone leaves a block
+  more than 60% like them. The town ends up *less* alike than chance.
+- **Too demanding.** Wanting three quarters alike with few empty homes:
+  the town sorts almost completely, yet some households never stop moving.
+
+Drag the preference sliders while the town runs: the households change
+their minds without the town being reshuffled.
+
+## Controls
+
+- **Run**: play or pause, run one full sweep, reset to the starting
+  layout, or shuffle a new town. Speed sets how many households take their
+  turn each frame.
+- **Preference**: the smallest and largest share of a household's
+  occupied neighbours that may come from its own group.
+- **Town**: grid size, number of groups, the largest group's share, the
+  share of empty homes, the neighbourhood (8 around, 4 across or the 24
+  within two steps), the moving rule and whether the edges wrap.
+- **Keep**: copy a link that rebuilds the same town, or save a PNG.
+
+Keyboard: <kbd>Space</kbd> play or pause, <kbd>S</kbd> one sweep,
+<kbd>R</kbd> reset, <kbd>N</kbd> new town.
+
+## How it works
+
+- **Contentment.** A household is content when the share of its occupied
+  neighbours from its own group lies within the chosen band. A household
+  with no occupied neighbours is content.
+- **Sweeps.** Each sweep lists the discontented households, shuffles them,
+  and gives each a turn. A household still discontented when its turn
+  comes moves according to the rule: *any empty home* (the textbook
+  version), *a random home that suits* or *the nearest home that suits*,
+  searched ring by ring outwards. When it is weighing a home, the one it is
+  leaving counts as empty.
+- **Endings.** The town has *settled* when nobody is discontented. It is
+  *stuck* when a whole sweep passes without a move: under the rules that
+  only move to suitable homes, that means no empty home suits anyone who
+  is left. Under the textbook rule a demanding town can churn forever.
+- **Neighbours alike** is the average share of a household's occupied
+  neighbours from its own group. **Alike by chance** is the same average
+  for a random layout, Σ (n<sub>g</sub>/N)(n<sub>g</sub> − 1)/(N − 1),
+  since any other household is equally likely to sit next door.
+- **Mixed contacts** is the share of neighbouring pairs of households that
+  belong to different groups: the length of the borders between groups.
+- **Entropy index H** is Theil's multigroup segregation index over 6 × 6
+  blocks: 0 when every block has the town's mix, 1 when every block holds
+  a single group.
+
+The tests check the neighbour lists on wrapped and walled grids, the group
+sizes, the measures on a checkerboard and on a town split in two, that
+random towns sit at the random baseline and near zero on H, that moves
+keep every household and the list of empty homes in step, that the
+content-seeking rules only ever move a household somewhere it is content,
+that the nearest rule finds the closest such home, that splitting a sweep
+across frames changes nothing, that each preset behaves as its note says,
+and that share links survive a round trip and clamp hostile values.
+
+## References
+
+- Thomas C. Schelling, "Models of segregation", *American Economic Review*
+  59(2) (1969), 488–493.
+- Thomas C. Schelling, "Dynamic models of segregation", *Journal of
+  Mathematical Sociology* 1(2) (1971), 143–186.
+- Thomas C. Schelling, *Micromotives and Macrobehavior* (1978).
+- Henri Theil and Anthony J. Finizza, "A note on the measurement of racial
+  integration of schools by means of informational concepts", *Journal of
+  Mathematical Sociology* 1(2) (1971), 187–193.
 
 ## License
 
