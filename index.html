@@ -72,6 +72,22 @@
         </fieldset>
 
         <fieldset>
+          <legend>Paint</legend>
+          <div class="buttons" id="brush" role="radiogroup" aria-label="Brush">
+            <button type="button" data-brush="-1" aria-pressed="true">Off</button>
+            <button type="button" data-brush="1" class="swatch-button"><span class="key swatch"></span>A</button>
+            <button type="button" data-brush="2" class="swatch-button"><span class="key swatch"></span>B</button>
+            <button type="button" data-brush="3" class="swatch-button"><span class="key swatch"></span>C</button>
+            <button type="button" data-brush="4" class="swatch-button"><span class="key swatch"></span>D</button>
+            <button type="button" data-brush="0" class="swatch-button"><span class="key swatch"></span>Empty</button>
+          </div>
+          <label>Brush size <output id="radius-out">1</output>
+            <input id="radius" type="range" min="0" max="6" step="1" value="1" />
+          </label>
+          <p class="hint">Pick a group and drag across the town to move households in by hand. Painting is not kept in links, and Reset undoes it.</p>
+        </fieldset>
+
+        <fieldset>
           <legend>Preference</legend>
           <label>Smallest share alike <output id="min-out">33%</output>
             <input id="min" type="range" min="0" max="100" step="1" value="33" />

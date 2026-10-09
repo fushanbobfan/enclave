@@ -353,3 +353,12 @@ abbr {
   text-decoration: underline dotted;
   cursor: help;
 }
+
+.swatch-button .key.swatch {
+  margin: 0 5px 0 0;
+  outline: 1px solid var(--line);
+}
+
+#town.painting {
+  cursor: crosshair;
+}

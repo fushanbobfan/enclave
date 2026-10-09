@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGrid, neighbourCounts, isContent } from '../src/grid.js';
 import { discontented, groupCounts, meanSimilarity, randomSimilarity } from '../src/measures.js';
-import { advance, createSim, destination, move, retune, runToRest, sweep } from '../src/sim.js';
+import { advance, createSim, destination, move, paint, retune, runToRest, sweep } from '../src/sim.js';
 
 const classic = { min: 3 / 8, max: 1 };
 
@@ -139,4 +139,49 @@ test('retuning a settled town wakes it under the new preference', () => {
   retune(sim, { pref: { min: 0, max: 1 }, rule: 'bogus' });
   assert.equal(sim.status, 'settled');
   assert.equal(sim.rule, 'random');
+});
+
+test('painting keeps sizes and empty homes in step and wakes a settled town', () => {
+  const g = createGrid({ width: 30, groups: 3, seed: 12 });
+  const sim = createSim(g, { pref: classic, seed: 12 });
+  runToRest(sim);
+  assert.equal(sim.status, 'settled');
+  // Drop a patch of group 3 into the middle of a group-1 enclave's homes.
+  const patch = [];
+  for (let y = 10; y < 14; y++) for (let x = 10; x < 14; x++) patch.push(y * 30 + x);
+  const changed = paint(sim, patch, 3);
+  assert.ok(changed > 0);
+  assert.equal(paint(sim, patch, 3), 0);
+  assert.deepEqual(groupCounts(g).slice(1), g.sizes);
+  assert.equal(groupCounts(g)[0], sim.empties.length);
+  for (const [k, j] of sim.empties.entries()) assert.equal(sim.emptyAt[j], k);
+  paint(sim, patch.slice(0, 5), 0);
+  assert.equal(groupCounts(g)[0], sim.empties.length);
+  for (const [k, j] of sim.empties.entries()) {
+    assert.equal(g.cells[j], 0);
+    assert.equal(sim.emptyAt[j], k);
+  }
+  assert.deepEqual(groupCounts(g).slice(1), g.sizes);
+});
+
+test('a lone newcomer in a settled block sets off moves', () => {
+  const g = createGrid({ width: 30, seed: 13 });
+  const sim = createSim(g, { pref: { min: 0.5, max: 1 }, seed: 13 });
+  runToRest(sim);
+  const i = g.cells.findIndex((c, k) => c === 1 && neighbourCounts(g, k, 1).same === 8);
+  assert.ok(i >= 0);
+  paint(sim, [i], 2);
+  assert.equal(sim.status, 'moving');
+  assert.ok(sim.queue.includes(i));
+  sweep(sim);
+  assert.ok(sim.history.at(-1).moves >= 1);
+});
+
+test('painting a group the town does not have does nothing', () => {
+  const g = createGrid({ width: 10, seed: 1 });
+  const sim = createSim(g, { pref: classic });
+  const before = g.cells.slice();
+  assert.equal(paint(sim, [0, 1, 2], 3), 0);
+  assert.equal(paint(sim, [0], -1), 0);
+  assert.deepEqual(g.cells, before);
 });

@@ -53,6 +53,17 @@ Run the tests with `npm test` (Node 20 or later, no dependencies).
 Drag the preference sliders while the town runs: the households change
 their minds without the town being reshuffled.
 
+## Painting by hand
+
+Pick a group (or *Empty*) under **Paint** and drag across the town to move
+households in by hand. Painting wakes a settled town, so you can watch what
+a single change sets off: drop one household into the middle of another
+group's enclave under a floor of 50% and it moves straight out again; paint
+a whole street of newcomers and the enclave around them reorganises.
+Painting changes the group sizes shown in the legend and the chance
+baseline. It is not kept in share links and does not affect the tipping
+chart, which always starts from the seeded town; **Reset** undoes it.
+
 ## Where each preference leads
 
 Under the sweep chart, **Run every floor** rebuilds the same starting town
@@ -81,6 +92,7 @@ the 200 sweeps ran out. Click the chart to set the floor there.
 - **Town**: grid size, number of groups, the largest group's share, the
   share of empty homes, the neighbourhood (8 around, 4 across or the 24
   within two steps), the moving rule and whether the edges wrap.
+- **Paint**: a brush for each group and for empty homes, and its size.
 - **Keep**: copy a link that rebuilds the same town, or save a PNG.
 
 Keyboard: <kbd>Space</kbd> play or pause, <kbd>S</kbd> one sweep,
@@ -120,7 +132,8 @@ sizes, the measures on a checkerboard and on a town split in two, that
 random towns sit at the random baseline and near zero on H, that moves
 keep every household and the list of empty homes in step, that the
 content-seeking rules only ever move a household somewhere it is content,
-that the nearest rule finds the closest such home, that splitting a sweep
+that the nearest rule finds the closest such home, that painting keeps the group sizes and the empty homes in step and
+wakes a settled town, that splitting a sweep
 across frames changes nothing, that the tipping curve climbs with the
 floor and collapses when the floor is out of reach, that each preset behaves as its note says,
 and that share links survive a round trip and clamp hostile values.
