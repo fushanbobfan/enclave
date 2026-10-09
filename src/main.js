@@ -4,7 +4,7 @@
 import { createGrid } from './grid.js';
 import { discontented, entropyIndex, meanSimilarity, mixedContacts, randomSimilarity } from './measures.js';
 import { PRESETS, matchPreset, presetSettings } from './presets.js';
-import { drawChart, drawTipping, fitTown, paintTown } from './render.js';
+import { drawChart, drawTipping, fitTown, floorAt, paintTown, tippingScale } from './render.js';
 import { randomSeed } from './rng.js';
 import { decode, encode, gridOptions, normalise, preference } from './share.js';
 import { advance, createSim, retune, sweep } from './sim.js';
@@ -180,13 +180,13 @@ function tipStatus() {
     return `Running floor ${t}% (${tipJob.points.length + 1} of ${tipJob.thresholds.length}), ${Math.round(progress(tipJob) * 100)}% done…`;
   }
   if (!tip.points.length) {
-    return 'Rebuilds this starting town for every floor from 0% up to the ceiling, in steps of 5, and runs each one to rest or for at most 200 sweeps.';
+    return 'Rebuilds this starting town for every floor from 0% up to the ceiling, in steps of 5, and runs each one to rest or for at most 200 sweeps. Click the chart to set the floor.';
   }
   if (tip.key !== tipKey()) return 'The town or the rules have changed since the last run: run every floor again.';
   const still = tip.points.filter((p) => p.status !== 'settled').map((p) => `${p.threshold}%`);
   return still.length
-    ? `Done. Floors that never came to rest: ${still.join(', ')}.`
-    : 'Done. Every floor came to rest.';
+    ? `Done. Floors that never came to rest: ${still.join(', ')}. Click the chart to set the floor.`
+    : 'Done. Every floor came to rest. Click the chart to set the floor.';
 }
 
 function setTipJob(job) {
@@ -285,6 +285,11 @@ function init() {
 
   $('tip-run').addEventListener('click', () => setTipJob(tipJob ? null : createTipping(settings)));
   $('play').addEventListener('click', () => setPlaying(!playing));
+  tipCanvas.addEventListener('click', (e) => {
+    const rect = tipCanvas.getBoundingClientRect();
+    const scale = tippingScale(rect.width, rect.height);
+    update({ min: floorAt(scale, e.clientX - rect.left) });
+  });
   $('step').addEventListener('click', () => {
     setPlaying(false);
     sweep(sim);

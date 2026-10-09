@@ -140,7 +140,11 @@ export function drawTipping(ctx, points, { current, baseline }, width, height, c
   }
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
-  for (const t of [0, 25, 50, 75, 100]) ctx.fillText(`${t}%`, s.x(t), s.box.bottom + 4);
+  for (const t of [0, 25, 50, 75, 100]) {
+    // Pull the end labels inside the box so neither edge clips them.
+    ctx.textAlign = t === 0 ? 'left' : t === 100 ? 'right' : 'center';
+    ctx.fillText(`${t}%`, s.x(t) + (t === 0 ? -2 : t === 100 ? 2 : 0), s.box.bottom + 4);
+  }
 
   ctx.setLineDash([4, 3]);
   ctx.strokeStyle = colours.baseline;
