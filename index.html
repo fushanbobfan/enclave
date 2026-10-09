@@ -30,6 +30,24 @@
             <span class="key baseline"></span> alike by chance
           </p>
         </div>
+        <div class="chart">
+          <div class="chart-head">
+            <h2>Where each preference leads</h2>
+            <button type="button" id="tip-run">Run every floor</button>
+          </div>
+          <p class="hint" id="tip-status">
+            Rebuilds this starting town for every floor from 0% up to the ceiling, in steps of 5, and
+            runs each one to rest or for at most 200 sweeps.
+          </p>
+          <canvas id="tipping" role="img" aria-label="Final similarity and discontent for each preference floor"></canvas>
+          <p class="legend">
+            <span class="key similarity"></span> neighbours alike at the end
+            <span class="key discontent"></span> discontented at the end
+            <span class="key dot"></span> settled
+            <span class="key ring"></span> still moving
+            <span class="key current"></span> current floor
+          </p>
+        </div>
       </section>
 
       <aside class="panel">
