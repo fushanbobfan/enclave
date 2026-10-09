@@ -1,0 +1,25 @@
+{
+  "name": "enclave",
+  "version": "0.1.0",
+  "description": "Schelling's segregation model in the browser: agents who want only a few neighbours like themselves still sort a mixed town into enclaves.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "serve": "node scripts/serve.js"
+  },
+  "keywords": [
+    "schelling",
+    "segregation",
+    "computational-social-science",
+    "social-science",
+    "simulation",
+    "canvas"
+  ],
+  "license": "MIT",
+  "author": "Jiayi Fan",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fushanbobfan/enclave.git"
+  },
+  "private": false
+}
