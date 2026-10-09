@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>enclave · Schelling's segregation model</title>
+    <meta name="description" content="Households who are happy as a minority still sort a mixed town into enclaves. An interactive version of Thomas Schelling's segregation model." />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>enclave</h1>
+      <p class="subtitle">
+        Thomas Schelling's segregation model. Each household stays put while enough of its neighbours
+        share its group and moves to an empty home when they don't. Nobody here asks to live apart,
+        and yet the town sorts itself into enclaves.
+      </p>
+    </header>
+
+    <main>
+      <section class="stage" aria-label="Town">
+        <canvas id="town" role="img" aria-label="Grid of homes coloured by group"></canvas>
+        <p class="legend" id="legend"></p>
+        <div class="chart">
+          <canvas id="chart" role="img" aria-label="Similarity and discontent over the sweeps"></canvas>
+          <p class="legend">
+            <span class="key similarity"></span> neighbours alike
+            <span class="key discontent"></span> households discontented
+            <span class="key baseline"></span> alike by chance
+          </p>
+        </div>
+      </section>
+
+      <aside class="panel">
+        <fieldset>
+          <legend>Run</legend>
+          <div class="buttons">
+            <button type="button" id="play" aria-pressed="false">Play</button>
+            <button type="button" id="step" title="Run one full sweep">Sweep</button>
+            <button type="button" id="reset" title="Put everyone back where they started">Reset</button>
+            <button type="button" id="reseed" title="Shuffle a new town">New town</button>
+          </div>
+          <label>Speed <input id="speed" type="range" min="1" max="10" step="1" value="5" /></label>
+          <p class="status" id="status" aria-live="polite"></p>
+        </fieldset>
+
+        <fieldset>
+          <legend>Scenario</legend>
+          <label>Preset
+            <select id="preset"></select>
+          </label>
+          <p class="hint" id="preset-note"></p>
+        </fieldset>
+
+        <fieldset>
+          <legend>Preference</legend>
+          <label>Wants at least <output id="min-out">33%</output> alike
+            <input id="min" type="range" min="0" max="100" step="1" value="33" />
+          </label>
+          <label>and at most <output id="max-out">100%</output> alike
+            <input id="max" type="range" min="0" max="100" step="1" value="100" />
+          </label>
+          <p class="hint">Shares of a household's occupied neighbours from its own group. A household with no neighbours is always content.</p>
+        </fieldset>
+
+        <fieldset>
+          <legend>Town</legend>
+          <label>Size <output id="size-out">60 × 60</output>
+            <input id="size" type="range" min="10" max="160" step="10" value="60" />
+          </label>
+          <label>Groups <output id="groups-out">2</output>
+            <input id="groups" type="range" min="2" max="4" step="1" value="2" />
+          </label>
+          <label>Largest group <output id="majority-out">50%</output>
+            <input id="majority" type="range" min="25" max="90" step="1" value="50" />
+          </label>
+          <label>Empty homes <output id="empty-out">10%</output>
+            <input id="empty" type="range" min="2" max="50" step="1" value="10" />
+          </label>
+          <label>Neighbourhood
+            <select id="neighbourhood">
+              <option value="moore">8 around (Moore)</option>
+              <option value="vonneumann">4 across (von Neumann)</option>
+              <option value="moore2">24 within two steps</option>
+            </select>
+          </label>
+          <label>Moving rule
+            <select id="rule">
+              <option value="random">Any empty home</option>
+              <option value="random-content">A random home that suits</option>
+              <option value="nearest">The nearest home that suits</option>
+            </select>
+          </label>
+          <label class="check"><input id="wrap" type="checkbox" checked /> Wrap around the edges</label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Now</legend>
+          <dl class="stats">
+            <dt>Sweeps</dt><dd id="s-sweeps">0</dd>
+            <dt>Moves last sweep</dt><dd id="s-moves">0</dd>
+            <dt>Discontented</dt><dd id="s-discontent">0</dd>
+            <dt>Neighbours alike</dt><dd id="s-similar">0</dd>
+            <dt>Alike by chance</dt><dd id="s-baseline">0</dd>
+            <dt>Mixed contacts</dt><dd id="s-mixed">0</dd>
+            <dt>Entropy index <abbr title="Theil's H over 6 × 6 blocks: 0 when every block has the town's mix, 1 when each holds one group">H</abbr></dt><dd id="s-entropy">0</dd>
+          </dl>
+          <label class="check"><input id="fade" type="checkbox" checked /> Fade discontented households</label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Keep</legend>
+          <div class="buttons">
+            <button type="button" id="copy-link">Copy link</button>
+            <button type="button" id="save-png">Save PNG</button>
+          </div>
+          <p class="hint">
+            <kbd>Space</kbd> play or pause, <kbd>S</kbd> one sweep, <kbd>R</kbd> reset, <kbd>N</kbd> new town.
+          </p>
+        </fieldset>
+      </aside>
+    </main>
+
+    <footer>
+      After Thomas C. Schelling, "Dynamic models of segregation", <i>Journal of Mathematical Sociology</i> 1 (1971).
+      <a href="https://github.com/fushanbobfan/enclave">Source</a>
+    </footer>
+
+    <script type="module" src="src/main.js"></script>
+  </body>
+</html>
