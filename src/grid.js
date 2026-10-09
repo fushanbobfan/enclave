@@ -129,3 +129,28 @@ export function householdContent(grid, i, pref) {
   const { same, total } = neighbourCounts(grid, i, g);
   return isContent(same, total, pref);
 }
+
+// Homes within a round brush of the given radius around home i. Wrapped
+// grids carry the brush across the edges; walled ones clip it.
+export function brushHomes(grid, i, radius) {
+  const { width: w, height: h, wrap } = grid;
+  const x0 = i % w;
+  const y0 = (i - x0) / w;
+  const r = Math.max(0, Math.floor(radius));
+  const seen = new Set();
+  for (let dy = -r; dy <= r; dy++) {
+    for (let dx = -r; dx <= r; dx++) {
+      if (dx * dx + dy * dy > r * r + r) continue;
+      let x = x0 + dx;
+      let y = y0 + dy;
+      if (wrap) {
+        x = ((x % w) + w) % w;
+        y = ((y % h) + h) % h;
+      } else if (x < 0 || y < 0 || x >= w || y >= h) {
+        continue;
+      }
+      seen.add(y * w + x);
+    }
+  }
+  return [...seen];
+}

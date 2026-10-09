@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  brushHomes,
   buildNeighbours,
   createGrid,
   groupSizes,
@@ -79,4 +80,20 @@ test('contentment uses an inclusive band and counts the isolated as content', ()
   g.cells[33] = 1;
   assert.ok(!householdContent(g, 33, pref));
   assert.ok(householdContent(g, 34, pref));
+});
+
+test('a brush covers a rounded patch, wrapping or clipping at the edges', () => {
+  const torus = createGrid({ width: 20, seed: 1 });
+  assert.deepEqual(brushHomes(torus, 45, 0), [45]);
+  assert.equal(brushHomes(torus, 45, 1).length, 9);
+  const r2 = brushHomes(torus, 210, 2);
+  assert.equal(r2.length, 21);
+  assert.ok(!r2.includes(210 - 42));
+  const corner = brushHomes(torus, 0, 1).sort((a, b) => a - b);
+  assert.deepEqual(corner, [0, 1, 19, 20, 21, 39, 380, 381, 399]);
+  const box = createGrid({ width: 20, wrap: false, seed: 1 });
+  assert.deepEqual(brushHomes(box, 0, 1).sort((a, b) => a - b), [0, 1, 20, 21]);
+  // A brush wider than a small town never lists a home twice.
+  const tiny = createGrid({ width: 10, seed: 1 });
+  assert.equal(brushHomes(tiny, 0, 8).length, 100);
 });
