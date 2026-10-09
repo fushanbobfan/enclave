@@ -69,7 +69,7 @@ function syncControls() {
   $('max-out').textContent = `${s.max}%`;
   const id = matchPreset(s);
   $('preset').value = id ?? '';
-  $('preset-note').textContent = id ? PRESETS.find((p) => p.id === id).note : 'Your own settings.';
+  $('preset-note').textContent = id ? PRESETS.find((p) => p.id === id).note : 'No preset matches these settings.';
   history.replaceState(null, '', `#${encode(s)}`);
 }
 

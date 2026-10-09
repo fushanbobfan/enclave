@@ -102,8 +102,9 @@ canvas {
 }
 
 #town {
-  height: min(68vh, 640px);
-  min-height: 320px;
+  aspect-ratio: 1 / 1;
+  height: auto;
+  max-height: min(68vh, 640px);
   background: var(--panel);
   touch-action: none;
 }
