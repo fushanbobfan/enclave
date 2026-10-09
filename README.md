@@ -53,6 +53,24 @@ Run the tests with `npm test` (Node 20 or later, no dependencies).
 Drag the preference sliders while the town runs: the households change
 their minds without the town being reshuffled.
 
+## Where each preference leads
+
+Under the sweep chart, **Run every floor** rebuilds the same starting town
+for every preference floor from 0% up to the ceiling, in steps of 5, runs
+each to rest (or for at most 200 sweeps) and plots where it ended up. On
+the default 60 × 60 town the curve is Schelling's in miniature:
+
+- below 20% almost nobody moves and the town stays at chance, 50% alike;
+- from a quarter to a half, a small change in what households want buys a
+  big change in the town: 74% alike at a floor of 30%, 88% at 50%;
+- by 70% the groups have separated completely, 99% alike;
+- above about 85% nobody can be satisfied, the random moves never stop,
+  and the town stays as mixed as it began, with nearly everyone
+  discontented.
+
+Filled dots are runs that came to rest; rings are runs still moving when
+the 200 sweeps ran out. Click the chart to set the floor there.
+
 ## Controls
 
 - **Run**: play or pause, run one full sweep, reset to the starting
@@ -92,6 +110,10 @@ Keyboard: <kbd>Space</kbd> play or pause, <kbd>S</kbd> one sweep,
 - **Entropy index H** is Theil's multigroup segregation index over 6 × 6
   blocks: 0 when every block has the town's mix, 1 when every block holds
   a single group.
+- **Tipping chart.** Each floor starts again from the town's seed, so the
+  points differ only in the floor. The runs are split into slices of a few
+  thousand household turns per frame; a sliced run gives exactly the same
+  result as an unsliced one.
 
 The tests check the neighbour lists on wrapped and walled grids, the group
 sizes, the measures on a checkerboard and on a town split in two, that
@@ -99,7 +121,8 @@ random towns sit at the random baseline and near zero on H, that moves
 keep every household and the list of empty homes in step, that the
 content-seeking rules only ever move a household somewhere it is content,
 that the nearest rule finds the closest such home, that splitting a sweep
-across frames changes nothing, that each preset behaves as its note says,
+across frames changes nothing, that the tipping curve climbs with the
+floor and collapses when the floor is out of reach, that each preset behaves as its note says,
 and that share links survive a round trip and clamp hostile values.
 
 ## References

@@ -14,6 +14,7 @@
   --discontent: #c2410c;
   --baseline: #8a8577;
   --grid: #ece6d8;
+  --current: #22252b;
   --button: #ebe6da;
   --button-hover: #ded7c7;
   color-scheme: light;
@@ -36,6 +37,7 @@
     --discontent: #fb923c;
     --baseline: #7d828c;
     --grid: #262b33;
+    --current: #e8e9ec;
     --button: #252a32;
     --button-hover: #30363f;
     color-scheme: dark;
@@ -117,6 +119,42 @@ canvas {
 
 #chart {
   height: 150px;
+}
+
+#tipping {
+  height: 170px;
+  cursor: pointer;
+}
+
+.chart-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.chart-head h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.key.dot,
+.key.ring {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid var(--similarity);
+}
+
+.key.dot {
+  background: var(--similarity);
+}
+
+.key.current {
+  width: 0;
+  height: 12px;
+  border-left: 1.5px solid var(--current);
+  border-radius: 0;
 }
 
 .legend {

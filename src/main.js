@@ -4,14 +4,16 @@
 import { createGrid } from './grid.js';
 import { discontented, entropyIndex, meanSimilarity, mixedContacts, randomSimilarity } from './measures.js';
 import { PRESETS, matchPreset, presetSettings } from './presets.js';
-import { drawChart, fitTown, paintTown } from './render.js';
+import { drawChart, drawTipping, fitTown, floorAt, paintTown, tippingScale } from './render.js';
 import { randomSeed } from './rng.js';
 import { decode, encode, gridOptions, normalise, preference } from './share.js';
 import { advance, createSim, retune, sweep } from './sim.js';
+import { createTipping, progress, stepTipping } from './tipping.js';
 
 const $ = (id) => document.getElementById(id);
 const townCanvas = $('town');
 const chartCanvas = $('chart');
+const tipCanvas = $('tipping');
 const GROUP_NAMES = ['A', 'B', 'C', 'D'];
 
 let settings = decode(location.hash);
@@ -21,6 +23,8 @@ let start;
 let playing = false;
 let colours;
 let dirty = true;
+let tipJob = null;
+let tip = { key: null, points: [] };
 const buffer = document.createElement('canvas');
 
 function readColours() {
@@ -35,6 +39,8 @@ function readColours() {
       baseline: v('--baseline'),
       similarity: v('--similarity'),
       discontent: v('--discontent'),
+      current: v('--current'),
+      background: v('--panel'),
     },
   };
 }
@@ -134,6 +140,12 @@ function draw() {
   const baseline = randomSimilarity(grid.sizes);
   drawChart(cctx, sim.history, { households, baseline }, chartCanvas.clientWidth, chartCanvas.clientHeight, colours.chart);
 
+  const tdpr = sizeCanvas(tipCanvas);
+  const tctx = tipCanvas.getContext('2d');
+  tctx.setTransform(tdpr, 0, 0, tdpr, 0, 0);
+  const points = tipJob ? tipJob.points : tip.key === tipKey() ? tip.points : [];
+  drawTipping(tctx, points, { current: settings.min, baseline }, tipCanvas.clientWidth, tipCanvas.clientHeight, colours.chart);
+
   $('s-sweeps').textContent = sim.sweep;
   $('s-moves').textContent = sim.lastMoves;
   $('s-discontent').textContent = `${unhappy.length} (${pct(households ? unhappy.length / households : 0)})`;
@@ -157,6 +169,33 @@ function statusText(unhappy) {
   return playing ? `Moving: sweep ${sim.sweep + 1}…` : 'Paused. Press Play or Sweep.';
 }
 
+// Everything but the floor decides the tipping chart.
+function tipKey() {
+  return encode({ ...settings, min: 0 });
+}
+
+function tipStatus() {
+  if (tipJob) {
+    const t = tipJob.thresholds[tipJob.points.length];
+    return `Running floor ${t}% (${tipJob.points.length + 1} of ${tipJob.thresholds.length}), ${Math.round(progress(tipJob) * 100)}% done…`;
+  }
+  if (!tip.points.length) {
+    return 'Rebuilds this starting town for every floor from 0% up to the ceiling, in steps of 5, and runs each one to rest or for at most 200 sweeps. Click the chart to set the floor.';
+  }
+  if (tip.key !== tipKey()) return 'The town or the rules have changed since the last run: run every floor again.';
+  const still = tip.points.filter((p) => p.status !== 'settled').map((p) => `${p.threshold}%`);
+  return still.length
+    ? `Done. Floors that never came to rest: ${still.join(', ')}. Click the chart to set the floor.`
+    : 'Done. Every floor came to rest. Click the chart to set the floor.';
+}
+
+function setTipJob(job) {
+  tipJob = job;
+  $('tip-run').textContent = job ? 'Stop' : 'Run every floor';
+  $('tip-status').textContent = tipStatus();
+  dirty = true;
+}
+
 function agentsPerFrame() {
   return Math.round(20 * 2.3 ** (Number($('speed').value) - 1));
 }
@@ -169,6 +208,16 @@ function frame() {
       spent += advance(sim, budget - spent);
     }
     if (sim.status !== 'moving') setPlaying(false);
+    dirty = true;
+  }
+  if (tipJob) {
+    stepTipping(tipJob, 6000);
+    if (tipJob.done) {
+      tip = { key: encode({ ...tipJob.settings, min: 0 }), points: tipJob.points };
+      setTipJob(null);
+    } else {
+      $('tip-status').textContent = tipStatus();
+    }
     dirty = true;
   }
   if (dirty) draw();
@@ -195,6 +244,8 @@ function update(patch, { rebuild = false } = {}) {
   } else if (before.min !== settings.min || before.max !== settings.max || before.rule !== settings.rule) {
     retune(sim, { pref: preference(settings), rule: settings.rule });
   }
+  if (tipJob && encode({ ...tipJob.settings, min: 0 }) !== tipKey()) setTipJob(null);
+  $('tip-status').textContent = tipStatus();
   setPlaying(playing);
 }
 
@@ -225,12 +276,20 @@ function init() {
   select.addEventListener('change', () => {
     settings = presetSettings(select.value, settings.seed);
     syncControls();
+    if (tipJob) setTipJob(null);
+    $('tip-status').textContent = tipStatus();
     build();
     legend();
     setPlaying(false);
   });
 
+  $('tip-run').addEventListener('click', () => setTipJob(tipJob ? null : createTipping(settings)));
   $('play').addEventListener('click', () => setPlaying(!playing));
+  tipCanvas.addEventListener('click', (e) => {
+    const rect = tipCanvas.getBoundingClientRect();
+    const scale = tippingScale(rect.width, rect.height);
+    update({ min: floorAt(scale, e.clientX - rect.left) });
+  });
   $('step').addEventListener('click', () => {
     setPlaying(false);
     sweep(sim);

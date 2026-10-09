@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGrid } from '../src/grid.js';
-import { chartScale, drawChart, fitTown, hexToRgb, homeAt, paintTown } from '../src/render.js';
+import { chartScale, drawChart, drawTipping, fitTown, floorAt, hexToRgb, homeAt, paintTown, tippingScale } from '../src/render.js';
 
 function stubContext() {
   const calls = {};
@@ -77,4 +77,30 @@ test('drawing the chart strokes the grid, the baseline and both series', () => {
   assert.equal(ctx.calls.stroke, 5 + 1 + 2);
   assert.equal(ctx.calls.lineTo, 5 + 1 + 4);
   drawChart(stubContext(), [], { households: 0, baseline: 0 }, 300, 160, colours);
+});
+
+test('the tipping chart maps floors across its width and clicks back to floors', () => {
+  const s = tippingScale(300, 160);
+  assert.equal(s.x(0), s.box.left);
+  assert.equal(s.x(100), s.box.right);
+  assert.equal(floorAt(s, s.x(37)), 37);
+  assert.equal(floorAt(s, s.x(37), 5), 35);
+  assert.equal(floorAt(s, -50), 0);
+  assert.equal(floorAt(s, 9999), 100);
+});
+
+test('the tipping chart fills settled runs and rings the rest', () => {
+  const ctx = stubContext();
+  const points = [
+    { threshold: 0, similarity: 0.5, discontented: 0, status: 'settled' },
+    { threshold: 50, similarity: 0.88, discontented: 0, status: 'settled' },
+    { threshold: 100, similarity: 0.5, discontented: 0.99, status: 'unsettled' },
+  ];
+  const colours = { grid: '#ccc', tick: '#666', baseline: '#999', current: '#000', similarity: '#00f', discontent: '#f80', background: '#fff' };
+  drawTipping(ctx, points, { current: 33, baseline: 0.5 }, 300, 160, colours);
+  assert.equal(ctx.calls.arc, 6);
+  assert.equal(ctx.calls.fill, 6);
+  // Three grid lines, the baseline, the current floor, two series and two rings.
+  assert.equal(ctx.calls.stroke, 3 + 1 + 1 + 2 + 2);
+  drawTipping(stubContext(), [], { current: 0, baseline: 0 }, 300, 160, colours);
 });
