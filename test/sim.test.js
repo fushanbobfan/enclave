@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGrid, neighbourCounts, isContent } from '../src/grid.js';
 import { discontented, groupCounts, meanSimilarity, randomSimilarity } from '../src/measures.js';
-import { advance, createSim, destination, move, runToRest, sweep } from '../src/sim.js';
+import { advance, createSim, destination, move, retune, runToRest, sweep } from '../src/sim.js';
 
 const classic = { min: 3 / 8, max: 1 };
 
@@ -121,4 +121,22 @@ test('move swaps a household into an empty home', () => {
   assert.equal(g.cells[to], group);
   assert.equal(g.cells[from], 0);
   assert.equal(sim.empties[0], from);
+});
+
+test('retuning a settled town wakes it under the new preference', () => {
+  const g = createGrid({ width: 30, seed: 10 });
+  const sim = createSim(g, { pref: classic, seed: 10 });
+  runToRest(sim);
+  assert.equal(sim.status, 'settled');
+  const sweeps = sim.sweep;
+  retune(sim, { pref: { min: 0.6, max: 1 } });
+  assert.equal(sim.status, 'moving');
+  assert.ok(sim.queue.length > 0);
+  assert.equal(sim.history.at(-1).discontented, sim.queue.length);
+  runToRest(sim);
+  assert.ok(sim.sweep > sweeps);
+  assert.ok(sim.history.at(-1).similarity > 0.85);
+  retune(sim, { pref: { min: 0, max: 1 }, rule: 'bogus' });
+  assert.equal(sim.status, 'settled');
+  assert.equal(sim.rule, 'random');
 });

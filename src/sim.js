@@ -186,3 +186,13 @@ export function runToRest(sim, maxSweeps = 500) {
   while (sim.status === 'moving' && sim.sweep < maxSweeps) sweep(sim);
   return sim.status;
 }
+
+// Change what households want or how they move without resetting the town.
+// The current sweep is abandoned and a fresh one queued under the new rules.
+export function retune(sim, { pref = sim.pref, rule = sim.rule } = {}) {
+  sim.pref = pref;
+  sim.rule = RULES.includes(rule) ? rule : sim.rule;
+  sim.status = 'moving';
+  sim.history.at(-1).discontented = discontented(sim.grid, sim.pref).length;
+  startSweep(sim);
+}
