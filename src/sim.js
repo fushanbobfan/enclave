@@ -196,3 +196,37 @@ export function retune(sim, { pref = sim.pref, rule = sim.rule } = {}) {
   sim.history.at(-1).discontented = discontented(sim.grid, sim.pref).length;
   startSweep(sim);
 }
+
+// Put a household of group `value` (0 to clear) in each listed home, keeping
+// the empty list and the group sizes in step, then wake the town. Returns
+// how many homes changed.
+export function paint(sim, homes, value) {
+  const { grid, empties, emptyAt } = sim;
+  if (!Number.isInteger(value) || value < 0 || value > grid.groups) return 0;
+  let changed = 0;
+  for (const i of homes) {
+    const old = grid.cells[i];
+    if (old === value) continue;
+    if (old === 0) {
+      const k = emptyAt[i];
+      const last = empties.pop();
+      if (last !== i) {
+        empties[k] = last;
+        emptyAt[last] = k;
+      }
+      emptyAt[i] = -1;
+    } else {
+      grid.sizes[old - 1]--;
+    }
+    if (value === 0) {
+      emptyAt[i] = empties.length;
+      empties.push(i);
+    } else {
+      grid.sizes[value - 1]++;
+    }
+    grid.cells[i] = value;
+    changed++;
+  }
+  if (changed) retune(sim);
+  return changed;
+}
