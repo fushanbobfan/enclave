@@ -1,13 +1,13 @@
 // The page: wires the controls to the town, runs moving day frame by frame,
 // and keeps the statistics, chart and share link up to date.
 
-import { createGrid } from './grid.js';
+import { brushHomes, createGrid } from './grid.js';
 import { discontented, entropyIndex, meanSimilarity, mixedContacts, randomSimilarity } from './measures.js';
 import { PRESETS, matchPreset, presetSettings } from './presets.js';
-import { drawChart, drawTipping, fitTown, floorAt, paintTown, tippingScale } from './render.js';
+import { drawChart, drawTipping, fitTown, floorAt, homeAt, paintTown, tippingScale } from './render.js';
 import { randomSeed } from './rng.js';
 import { decode, encode, gridOptions, normalise, preference } from './share.js';
-import { advance, createSim, retune, sweep } from './sim.js';
+import { advance, createSim, paint, retune, sweep } from './sim.js';
 import { createTipping, progress, stepTipping } from './tipping.js';
 
 const $ = (id) => document.getElementById(id);
@@ -20,9 +20,12 @@ let settings = decode(location.hash);
 let grid;
 let sim;
 let start;
+let startSizes;
 let playing = false;
 let colours;
 let dirty = true;
+let brush = -1;
+let stroke = null;
 let tipJob = null;
 let tip = { key: null, points: [] };
 const buffer = document.createElement('canvas');
@@ -48,6 +51,7 @@ function readColours() {
 function build() {
   grid = createGrid(gridOptions(settings));
   start = grid.cells.slice();
+  startSizes = grid.sizes.slice();
   sim = createSim(grid, { pref: preference(settings), rule: settings.rule, seed: settings.seed });
   buffer.width = grid.width;
   buffer.height = grid.height;
@@ -56,6 +60,7 @@ function build() {
 
 function restart() {
   grid.cells.set(start);
+  grid.sizes = startSizes.slice();
   sim = createSim(grid, { pref: preference(settings), rule: settings.rule, seed: settings.seed });
   dirty = true;
 }
@@ -79,7 +84,48 @@ function syncControls() {
   history.replaceState(null, '', `#${encode(s)}`);
 }
 
+function syncBrush() {
+  if (brush > settings.groups) brush = -1;
+  for (const b of document.querySelectorAll('#brush button')) {
+    const v = Number(b.dataset.brush);
+    b.hidden = v > settings.groups;
+    b.setAttribute('aria-pressed', String(v === brush));
+    const key = b.querySelector('.key');
+    if (key) key.style.background = colours.town[v];
+  }
+  townCanvas.classList.toggle('painting', brush >= 0);
+}
+
+// The home under a pointer event, in grid coordinates.
+function pointerHome(e) {
+  const rect = townCanvas.getBoundingClientRect();
+  const sx = townCanvas.width / rect.width;
+  const sy = townCanvas.height / rect.height;
+  const fit = fitTown(grid.width, grid.height, townCanvas.width, townCanvas.height);
+  const i = homeAt(fit, grid.width, grid.height, (e.clientX - rect.left) * sx, (e.clientY - rect.top) * sy);
+  return i < 0 ? null : { x: i % grid.width, y: Math.floor(i / grid.width) };
+}
+
+// Paint along the straight line from the last home under the pointer, so a
+// quick drag leaves no gaps.
+function paintTo(home) {
+  const from = stroke.last ?? home;
+  const steps = Math.max(Math.abs(home.x - from.x), Math.abs(home.y - from.y), 1);
+  const homes = new Set();
+  for (let k = 0; k <= steps; k++) {
+    const x = Math.round(from.x + ((home.x - from.x) * k) / steps);
+    const y = Math.round(from.y + ((home.y - from.y) * k) / steps);
+    for (const j of brushHomes(grid, y * grid.width + x, Number($('radius').value))) homes.add(j);
+  }
+  stroke.last = home;
+  if (paint(sim, homes, brush)) {
+    legend();
+    dirty = true;
+  }
+}
+
 function legend() {
+  syncBrush();
   const out = $('legend');
   out.textContent = '';
   grid.sizes.forEach((n, g) => {
@@ -283,6 +329,32 @@ function init() {
     setPlaying(false);
   });
 
+  for (const b of document.querySelectorAll('#brush button')) {
+    b.addEventListener('click', () => {
+      brush = Number(b.dataset.brush);
+      syncBrush();
+    });
+  }
+  $('radius').addEventListener('input', () => ($('radius-out').textContent = $('radius').value));
+  townCanvas.addEventListener('pointerdown', (e) => {
+    if (brush < 0) return;
+    const home = pointerHome(e);
+    if (!home) return;
+    e.preventDefault();
+    townCanvas.setPointerCapture(e.pointerId);
+    stroke = { id: e.pointerId, last: null };
+    paintTo(home);
+  });
+  townCanvas.addEventListener('pointermove', (e) => {
+    if (!stroke || e.pointerId !== stroke.id) return;
+    const home = pointerHome(e);
+    if (home) paintTo(home);
+  });
+  const endStroke = (e) => {
+    if (stroke && e.pointerId === stroke.id) stroke = null;
+  };
+  townCanvas.addEventListener('pointerup', endStroke);
+  townCanvas.addEventListener('pointercancel', endStroke);
   $('tip-run').addEventListener('click', () => setTipJob(tipJob ? null : createTipping(settings)));
   $('play').addEventListener('click', () => setPlaying(!playing));
   tipCanvas.addEventListener('click', (e) => {
@@ -298,6 +370,7 @@ function init() {
   $('reset').addEventListener('click', () => {
     setPlaying(false);
     restart();
+    legend();
   });
   $('reseed').addEventListener('click', () => update({ seed: randomSeed() }));
   $('fade').addEventListener('change', () => {
